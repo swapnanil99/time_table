@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Swapnanil's Schedule</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#090910;--panel:#0E0E18;--surf:#14141F;--surf2:#1A1A28;
+  --brd:rgba(255,255,255,0.06);--brd2:rgba(255,255,255,0.13);
+  --txt:#F2F0FA;--txt2:#9896B2;--txt3:#52506C;
+  /* Category colours */
+  --gate:#42D4C8;   /* GATE study */
+  --aiml:#3EC6A0;   /* AI/ML */
+  --dsa:#F97B5A;    /* DSA */
+  --job:#59A8F5;    /* Job search */
+  --proj:#A78BFA;   /* Backend/AI project */
+  --profile:#F5C842;/* Profile & portfolio */
+  --mock:#E06BCD;   /* Mock interview */
+  --rev:#8B7BF8;    /* Revision / morning */
+  --read:#88C46A;   /* Reading */
+  --note:#9898B8;   /* Notes / planning */
+  --free:#1E1C34;   /* Free zone */
+  --lunch:#2C2410;  /* Lunch */
+  --sleep:#12102A;  /* Sleep/wind */
+  --r:12px;
+  --active-shadow:0 0 0 2px rgba(139,123,248,0.55),0 6px 28px rgba(139,123,248,0.22);
+}
+
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);overflow:hidden}
+
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 55% 45% at 12% 8%,rgba(139,123,248,0.1) 0%,transparent 50%),
+             radial-gradient(ellipse 45% 55% at 88% 90%,rgba(62,198,160,0.07) 0%,transparent 50%)}
+
+/* ══ DESKTOP LAYOUT ══ */
+.root{position:relative;z-index:1;display:grid;grid-template-columns:230px 1fr;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--panel);border-right:1px solid var(--brd);display:flex;flex-direction:column;padding:18px 13px 14px;overflow:hidden;gap:0}
+.brand{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--brd)}
+.brand-name{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.02em}
+.brand-name span{background:linear-gradient(90deg,var(--rev),var(--aiml));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.brand-date{font-size:11px;color:var(--txt3);margin-top:3px}
+
+.clock-card{background:linear-gradient(135deg,rgba(139,123,248,0.13),rgba(62,198,160,0.07));border:1px solid rgba(139,123,248,0.28);border-radius:var(--r);padding:11px 13px;margin-bottom:11px;display:flex;justify-content:space-between;align-items:center}
+.clock-time{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.clock-lbl{font-size:9px;color:var(--txt3);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+.sbadge{font-size:10px;font-weight:700;border-radius:20px;padding:3px 9px;white-space:nowrap}
+.sb-ok{background:rgba(62,198,160,0.14);color:var(--aiml);border:1px solid rgba(62,198,160,0.3)}
+.sb-late{background:rgba(249,123,90,0.14);color:var(--dsa);border:1px solid rgba(249,123,90,0.3)}
+
+.nav-btns{display:flex;gap:5px;margin-bottom:10px}
+.nbtn{flex:1;padding:7px 0;border-radius:40px;border:1px solid var(--brd2);background:var(--surf2);color:var(--txt2);font-size:12px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.nbtn:hover{background:var(--surf);color:var(--txt)}
+.nbtn.today{background:linear-gradient(135deg,var(--rev),#4030B8);border-color:transparent;color:#fff;font-weight:700}
+
+.day-tabs{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto;scrollbar-width:none}
+.day-tabs::-webkit-scrollbar{display:none}
+.day-tab{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r);border:1px solid transparent;background:transparent;color:var(--txt3);cursor:pointer;transition:all .14s;text-align:left;width:100%}
+.day-tab:hover{background:var(--surf);color:var(--txt2);border-color:var(--brd)}
+.day-tab.active{background:linear-gradient(135deg,rgba(139,123,248,0.18),rgba(62,198,160,0.09));border-color:rgba(139,123,248,0.38);color:var(--txt)}
+.tab-dot{width:8px;height:8px;border-radius:50%;background:var(--txt3);flex-shrink:0;transition:all .14s}
+.day-tab.active .tab-dot,.day-tab.is-today .tab-dot{background:var(--rev);box-shadow:0 0 8px rgba(139,123,248,0.7)}
+.tab-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;flex:1}
+.tab-now{font-size:9px;font-weight:800;background:var(--rev);color:#fff;border-radius:20px;padding:2px 7px;letter-spacing:.04em}
+
+.side-bottom{margin-top:10px;padding-top:10px;border-top:1px solid var(--brd);display:flex;flex-direction:column;gap:4px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--surf);border:1px solid var(--brd);border-radius:9px}
+.stat-lbl{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em}
+.stat-val{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--txt)}
+
+/* colour legend */
+.legend{display:flex;flex-wrap:wrap;gap:5px;padding-top:10px;border-top:1px solid var(--brd);margin-top:4px}
+.leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt3)}
+.leg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ── MAIN ── */
+.main{display:flex;flex-direction:column;overflow:hidden}
+.main-hdr{padding:16px 24px 13px;border-bottom:1px solid var(--brd);flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.day-title{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.date-sub{font-size:12px;color:var(--txt3);margin-top:5px}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.gate-strip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--gate);background:rgba(66,212,200,0.09);border:1px solid rgba(66,212,200,0.25);border-radius:20px;padding:5px 13px}
+.shift-info-hdr{font-size:11px;color:var(--txt3)}
+
+.cols{flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.col{overflow-y:auto;padding:12px 20px 22px;scrollbar-width:thin;scrollbar-color:var(--surf2) transparent}
+.col::-webkit-scrollbar{width:3px}
+.col::-webkit-scrollbar-thumb{background:var(--surf2);border-radius:4px}
+.col:first-child{border-right:1px solid var(--brd)}
+
+.sec-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);padding:13px 0 6px;display:flex;align-items:center;gap:8px}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--brd)}
+
+/* ══ SLOT ══ */
+.slot{display:flex;gap:12px;align-items:flex-start;padding:12px 13px 12px 16px;border-radius:var(--r);border:1px solid var(--brd);background:var(--surf);margin-bottom:5px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .14s,transform .1s,box-shadow .18s}
+.slot::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.slot:hover:not(.active-now):not(.slot-done){border-color:var(--brd2);transform:translateX(2px)}
+
+/* ▶ ACTIVE */
+.slot.active-now{border-color:rgba(139,123,248,0.6)!important;background:rgba(139,123,248,0.11)!important;box-shadow:var(--active-shadow)}
+.slot.active-now .s-title{color:#fff!important;font-size:17px!important}
+.slot.active-now .s-time{color:var(--rev)!important;font-weight:700}
+.slot.active-now::after{content:'▶ NOW';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;color:var(--rev);background:rgba(139,123,248,0.2);border:1px solid rgba(139,123,248,0.45);border-radius:20px;padding:3px 10px;letter-spacing:.06em;animation:pulse 1.6s ease-in-out infinite}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:linear-gradient(90deg,var(--rev),var(--aiml));border-radius:0 2px 0 0;transition:width 30s linear}
+
+/* ▷ NEXT */
+.slot.up-next{border-color:rgba(62,198,160,0.4)!important;background:rgba(62,198,160,0.08)!important}
+.slot.up-next::after{content:'NEXT';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:800;color:var(--aiml);background:rgba(62,198,160,0.14);border:1px solid rgba(62,198,160,0.3);border-radius:20px;padding:3px 9px;letter-spacing:.06em}
+
+/* ✓ DONE */
+.slot.slot-done{opacity:.3}
+.slot.slot-done .s-title{text-decoration:line-through;text-decoration-color:rgba(255,255,255,0.25)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.65}}
+
+.edit-ico{position:absolute;right:9px;top:9px;font-size:13px;opacity:0;transition:opacity .14s;color:var(--txt3)}
+.slot:not(.active-now):not(.up-next):hover .edit-ico{opacity:.55}
+
+.s-time{font-size:12px;color:var(--txt3);min-width:80px;flex-shrink:0;padding-top:1px;font-variant-numeric:tabular-nums;line-height:1.4}
+.s-body{flex:1;min-width:0}
+.s-title{font-size:15px;font-weight:600;color:var(--txt);line-height:1.3}
+.s-sub{font-size:12px;color:var(--txt2);margin-top:3px;line-height:1.5}
+.s-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.tag{font-size:9px;font-weight:700;border-radius:20px;padding:2px 8px;letter-spacing:.04em}
+
+/* slot colour classes */
+.C-gate {background:rgba(66,212,200,0.09); border-color:rgba(66,212,200,0.28)} .C-gate::before {background:var(--gate)}
+.C-aiml {background:rgba(62,198,160,0.08); border-color:rgba(62,198,160,0.22)} .C-aiml::before {background:var(--aiml)}
+.C-dsa  {background:rgba(249,123,90,0.09); border-color:rgba(249,123,90,0.22)} .C-dsa::before  {background:var(--dsa)}
+.C-job  {background:rgba(89,168,245,0.08); border-color:rgba(89,168,245,0.22)} .C-job::before  {background:var(--job)}
+.C-proj {background:rgba(167,139,250,0.09);border-color:rgba(167,139,250,0.22)}.C-proj::before {background:var(--proj)}
+.C-profile{background:rgba(245,200,66,0.08);border-color:rgba(245,200,66,0.22)}.C-profile::before{background:var(--profile)}
+.C-mock {background:rgba(224,107,205,0.08);border-color:rgba(224,107,205,0.22)}.C-mock::before {background:var(--mock)}
+.C-rev  {background:rgba(139,123,248,0.09);border-color:rgba(139,123,248,0.22)}.C-rev::before  {background:var(--rev)}
+.C-read {background:rgba(136,196,106,0.08);border-color:rgba(136,196,106,0.22)}.C-read::before {background:var(--read)}
+.C-note {background:rgba(152,152,184,0.07);border-color:rgba(152,152,184,0.16)}.C-note::before {background:var(--note)}
+.C-free {background:var(--free);border-color:rgba(255,255,255,0.05)}           .C-free::before {background:#4A4870}
+.C-lunch{background:var(--lunch);border-color:rgba(200,160,60,0.2)}             .C-lunch::before{background:#B89040}
+.C-sleep{background:var(--sleep);border-color:rgba(255,255,255,0.04);border-style:dashed}.C-sleep::before{background:#3A386A}
+.C-break{background:var(--surf2);border-color:var(--brd)}                       .C-break::before{background:#3C3858}
+
+/* tag colours */
+.T-gate   {background:rgba(66,212,200,0.15); color:var(--gate)}
+.T-aiml   {background:rgba(62,198,160,0.15); color:var(--aiml)}
+.T-dsa    {background:rgba(249,123,90,0.15); color:var(--dsa)}
+.T-job    {background:rgba(89,168,245,0.15); color:var(--job)}
+.T-proj   {background:rgba(167,139,250,0.15);color:var(--proj)}
+.T-profile{background:rgba(245,200,66,0.15); color:var(--profile)}
+.T-mock   {background:rgba(224,107,205,0.15);color:var(--mock)}
+.T-fixed  {background:rgba(245,200,66,0.12); color:var(--profile);border:1px solid rgba(245,200,66,0.25)}
+.T-gate-s {background:rgba(66,212,200,0.12); color:var(--gate);border:1px solid rgba(66,212,200,0.25)}
+
+/* REST */
+.rest-full{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px}
+.rest-moon{font-size:60px;margin-bottom:16px}
+.rest-full h2{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;margin-bottom:12px;letter-spacing:-.02em}
+.rest-full p{font-size:15px;color:var(--txt2);line-height:1.9;max-width:460px}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-ov.open{display:flex}
+.modal{background:var(--panel);border:1px solid var(--brd2);border-radius:18px;padding:26px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto}
+.modal h3{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--txt);margin-bottom:16px}
+.modal label{display:block;font-size:10px;color:var(--txt2);margin:11px 0 4px;text-transform:uppercase;letter-spacing:.06em}
+.modal input,.modal textarea,.modal select{width:100%;background:var(--bg);border:1px solid var(--brd2);border-radius:9px;padding:10px 13px;color:var(--txt);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .18s}
+.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:var(--rev)}
+.modal textarea{resize:vertical;min-height:68px}
+.modal select option{background:var(--surf2)}
+.mact{display:flex;gap:8px;margin-top:20px}
+.mbtn{flex:1;padding:11px;border-radius:40px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;transition:opacity .18s}
+.mbtn.save{background:linear-gradient(135deg,var(--rev),#4030B8);color:#fff}
+.mbtn.cancel{background:var(--surf2);color:var(--txt2);border:1px solid var(--brd)}
+.mbtn:hover{opacity:.82}
+.mhint{font-size:10px;color:var(--txt3);text-align:center;margin-top:8px}
+
+/* ══ MOBILE ══ */
+@media(max-width:700px){
+  html,body{overflow:auto;height:auto}
+  .root{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto;min-height:100vh}
+  .sidebar{flex-direction:column;padding:14px 14px 10px;border-right:none;border-bottom:1px solid var(--brd)}
+  .day-tabs{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:5px;flex:none;scrollbar-width:none}
+  .day-tabs::-webkit-scrollbar{display:none}
+  .day-tab{flex-direction:column;padding:7px 10px;gap:4px;min-width:52px;align-items:center;text-align:center}
+  .tab-dot{margin:0}
+  .tab-name{font-size:11px}
+  .tab-now{font-size:8px;padding:1px 5px}
+  .side-bottom{display:none}
+  .main{overflow:visible}
+  .cols{grid-template-columns:1fr;overflow:visible;height:auto}
+  .col{overflow:visible;padding:10px 14px 16px}
+  .col:first-child{border-right:none;border-bottom:1px solid var(--brd)}
+  .main-hdr{padding:14px 14px 10px;flex-direction:column;align-items:flex-start;gap:8px}
+  .hdr-right{align-items:flex-start}
+  .day-title{font-size:22px}
+  .clock-card{padding:10px 12px}
+  .clock-time{font-size:20px}
+  .brand-name{font-size:15px}
+  .s-title{font-size:14px}
+  .s-sub{font-size:11px}
+  .s-time{font-size:11px;min-width:70px}
+}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="root">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-name">Swapnanil's <span>Schedule</span></div>
+    <div class="brand-date" id="brand-date">—</div>
+  </div>
+  <div class="clock-card">
+    <div>
+      <div class="clock-time" id="live-clock">12:00 AM</div>
+      <div class="clock-lbl">Live time</div>
+    </div>
+    <div id="shift-badge"></div>
+  </div>
+  <div class="nav-btns">
+    <button class="nbtn" onclick="prevDay()">←</button>
+    <button class="nbtn today" onclick="goToday()">Today</button>
+    <button class="nbtn" onclick="nextDay()">→</button>
+  </div>
+  <div class="day-tabs" id="day-tabs"></div>
+  <div class="side-bottom">
+    <div id="side-stats"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="main-hdr">
+    <div>
+      <div class="day-title" id="day-title">—</div>
+      <div class="date-sub" id="date-sub">—</div>
+    </div>
+    <div class="hdr-right">
+      <div id="gate-strip"></div>
+      <div class="shift-info-hdr" id="shift-info"></div>
+    </div>
+  </div>
+  <div id="body-area" class="cols"></div>
+</main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-ov" id="modal">
+  <div class="modal">
+    <h3>✎ Edit Slot</h3>
+    <label>Title</label><input type="text" id="e-title">
+    <label>Details</label><textarea id="e-sub"></textarea>
+    <label>Colour / Category</label>
+    <select id="e-type">
+      <option value="C-gate">🟢 Teal — GATE Study</option>
+      <option value="C-aiml">🟩 Green — AI/ML</option>
+      <option value="C-dsa">🟠 Coral — DSA</option>
+      <option value="C-job">🔵 Blue — Job Search</option>
+      <option value="C-proj">🟣 Purple — Backend/AI Project</option>
+      <option value="C-profile">🟡 Yellow — Profile & Portfolio</option>
+      <option value="C-mock">🩷 Pink — Mock Interview</option>
+      <option value="C-rev">💜 Violet — Revision</option>
+      <option value="C-read">🍃 Lime — Reading</option>
+      <option value="C-note">⬜ Grey — Notes / Planning</option>
+      <option value="C-free">🌑 Dim — Free Time</option>
+      <option value="C-lunch">🍱 Gold — Lunch / Fixed</option>
+      <option value="C-sleep">🌙 Dark — Sleep / Wind Down</option>
+      <option value="C-break">⬛ Break</option>
+    </select>
+    <div class="mact">
+      <button class="mbtn cancel" onclick="closeModal()">Cancel</button>
+      <button class="mbtn save" onclick="saveEdit()">Save</button>
+    </div>
+    <div class="mhint">Changes saved for this session</div>
+  </div>
+</div>
+
+<script>
+/* ══ CONSTANTS ══ */
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+const GATE_T = {
+  0:'Light revision — weakest topic re-read',
+  1:'Discrete Mathematics — sets, relations, logic, combinatorics',
+  2:'Operating Systems — scheduling, memory, deadlock',
+  3:'DBMS — normalization, SQL, ACID, indexing',
+  4:'Computer Networks — OSI, TCP/IP, routing, DNS',
+  5:'COA + Compiler Design (alternate weekly)',
+  6:'Algorithms & TOC (alternate weekly)'
+};
+const AIML_T = {
+  1:'LLM basics — tokenization, attention, embeddings, transformers',
+  2:'RAG pipeline — chunking, embedding, retrieval, reranking',
+  3:'LangChain LCEL, chains, agents, tools, memory',
+  4:'LangGraph — StateGraph, checkpointing, HITL, multi-agent',
+  5:'Vector DBs — Chroma, Pinecone, Qdrant + hybrid search',
+  6:'AI/ML weekly consolidation — connect all topics'
+};
+const DSA_N = {1:'Arrays & Binary Search',2:'Linked Lists & Recursion',3:'Trees (BST/DFS/BFS)',4:'Graphs',5:'Dynamic Programming',6:'Strings & Stacks'};
+const DSA_S = {
+  1:'Two pointer, sliding window, binary search template — 1–2 problems',
+  2:'Fast/slow pointer, reverse, merge — 1–2 problems',
+  3:'Inorder/preorder/BFS, LCA, max path sum — 1–2 problems',
+  4:'BFS/DFS, topo sort, cycle detection — 1–2 problems',
+  5:'Rotating: 1D DP → 2D/Grid → Knapsack → LCS/LIS',
+  6:'Anagram, palindrome, monotonic stack — 2 timed problems'
+};
+const GATE_MOCK_T = {
+  1:'Discrete Math mock — 20 MCQs timed (30 min)',
+  2:'OS mock — 20 MCQs timed (30 min)',
+  3:'DBMS mock — 20 MCQs timed (30 min)',
+  4:'CN mock — 20 MCQs timed (30 min)',
+  5:'COA / Compiler mock — 20 MCQs timed (30 min)',
+  6:'Mixed GATE mock — previous year questions (45 min)',
+  0:'GATE PYQ revision — spot weak areas'
+};
+
+/* ══ TIME ══ */
+function toMin(h,m){return h*60+m}
+function fmt(min){
+  min=((min%1440)+1440)%1440;
+  const h=Math.floor(min/60),m=min%60;
+  const hh=h%12===0?12:h%12,ap=h<12?'AM':'PM';
+  return `${hh}:${m.toString().padStart(2,'0')} ${ap}`;
+}
+function rng(s,d){return fmt(s)+' – '+fmt(s+d)}
+function nowMin(){const n=new Date();return toMin(n.getHours(),n.getMinutes())}
+
+/* ══ MAC-ON SHIFT LOGIC ══
+   Store the time this page was first loaded (= Mac turned on / browser opened).
+   Schedule shifts forward by that delta, clamped so morning block fits before lunch.
+   Fixed blocks: Lunch 13:00–15:00, Free 20:00–22:00.
+*/
+const DEFAULT_START = toMin(6,30);  // 6:30 AM
+const LUNCH_S = toMin(13,0), LUNCH_D = 120;
+const FREE_S  = toMin(20,0), FREE_D  = 120;
+const GATE_D  = 90,  GATE_MOCK_D = 30;
+const WIND_D  = 30;
+
+// Morning durations: rev30 + gate_morning60 + aiml120 + dsa60 + job90 = 360 min
+// Latest start so last morning block ends before lunch: 13:00 - 360 = 7:00 (30 min max shift)
+const MORNING_TOTAL = 360;
+const MAX_SHIFT = LUNCH_S - DEFAULT_START - MORNING_TOTAL; // 30 min
+
+const PAGE_LOAD_MIN = nowMin(); // when page was opened
+
+function getShift(){
+  const nm = PAGE_LOAD_MIN;
+  if(nm <= DEFAULT_START || nm >= toMin(23,0)) return 0;
+  return Math.min(nm - DEFAULT_START, MAX_SHIFT);
+}
+
+/* ══ BUILD SLOTS ══ */
+function buildSlots(d){
+  if(d===0) return buildSunday();
+  const shift = getShift();
+  let c = DEFAULT_START + shift;
+
+  const slots = [];
+
+  // Morning GATE revision (1 hr)
+  slots.push({start:c,dur:60,title:'GATE CS — morning revision',
+    sub:GATE_T[d]+' — theory notes, formula revision, concept clarity',
+    cls:'C-gate',tags:['GATE'],shifted:shift>0});
+  c+=60;
+
+  // AI/ML (2 hr)
+  slots.push({start:c,dur:120,title:'AI/ML deep study',sub:AIML_T[d]||'',
+    cls:'C-aiml',tags:['AI/ML'],shifted:shift>0});
+  c+=120;
+
+  // DSA (1 hr)
+  slots.push({start:c,dur:60,title:'DSA — '+DSA_N[d],sub:DSA_S[d]||'',
+    cls:'C-dsa',tags:['DSA'],shifted:shift>0});
+  c+=60;
+
+  // Job search (1.5 hr)
+  slots.push({start:c,dur:90,title:'Job search & applications',
+    sub:'Startup research, LinkedIn outreach, apply 3–5 roles, track status',
+    cls:'C-job',tags:['Job Search'],shifted:shift>0});
+  c+=90;
+
+  // LUNCH FIXED
+  slots.push({start:LUNCH_S,dur:LUNCH_D,title:'Lunch break',
+    sub:'খাওয়া, 20 min nap (optional). FIXED 1–3 PM — never changes.',
+    cls:'C-lunch',tags:['FIXED'],fixed:true});
+
+  c = LUNCH_S + LUNCH_D; // 15:00
+
+  // Backend / AI Project (1.5 hr)
+  slots.push({start:c,dur:90,title:d===6?'Project wrap-up':'Backend / AI project build',
+    sub:d===6?'Weekly progress commit, README update, GitHub push'
+      :'Hands-on project work — RAG app / LangGraph agent / Django backend',
+    cls:'C-proj',tags:['Backend Project','AI Project']});
+  c+=90;
+
+  // Profile & Portfolio (45 min)
+  slots.push({start:c,dur:45,title:'Profile & portfolio build',
+    sub:'GitHub README, LinkedIn posts, portfolio site update, research paper highlight',
+    cls:'C-profile',tags:['Profile Build']});
+  c+=45;
+
+  // Mock interview (45 min)
+  slots.push({start:c,dur:45,title:d===6?'Full weekly mock':'Mock interview prep',
+    sub:d===6?'End-to-end mock — DSA + AI/ML + behavioural. Record & review.'
+      :'AI/ML conceptual Q&A, system design, HR questions — self-mock',
+    cls:'C-mock',tags:['Mock Interview']});
+  c+=45;
+
+  // Break (30 min)
+  slots.push({start:c,dur:30,title:'Break',sub:'Walk, snack, fresh air — mandatory reset.',cls:'C-break',tags:[]});
+  c+=30;
+
+  // Reading (to FREE_S)
+  const readDur = FREE_S - c; // fills remaining gap
+  if(readDur > 0){
+    slots.push({start:c,dur:readDur,title:d===6?'Weekly review + next week plan':'Reading & current trends',
+      sub:d===6?'Gaps identify, strengths note, next week schedule set, Notion sync'
+        :'arXiv papers, LangChain / LangGraph docs, industry news, Notion update',
+      cls:d===6?'C-note':'C-read',tags:d===6?['Notes']:['Reading']});
+    c+=readDur;
+  }
+
+  // FREE FIXED (8–10 PM)
+  slots.push({start:FREE_S,dur:FREE_D,title:'Free time — no study',
+    sub:'Dinner, family, entertainment. Protected — don\'t touch this.',
+    cls:'C-free',tags:['FIXED'],fixed:true});
+
+  // GATE night study (1.5 hr)
+  const gS = FREE_S+FREE_D;
+  slots.push({start:gS,dur:GATE_D,title:'GATE CS — night deep study',
+    sub:GATE_T[d]+' — solve previous year questions, concept deep dive',
+    cls:'C-gate',tags:['GATE']});
+
+  // GATE subject mock test (30 min)
+  slots.push({start:gS+GATE_D,dur:GATE_MOCK_D,title:'GATE subject mock test',
+    sub:GATE_MOCK_T[d],cls:'C-gate',tags:['GATE','Mock Test']});
+
+  // Next day planning + today's notes (30 min) — replaces wind down
+  slots.push({start:gS+GATE_D+GATE_MOCK_D,dur:WIND_D,
+    title:'Next day plan + today\'s notes',
+    sub:'আজ কী করলাম — summary লেখো। কাল কী করব — 3 priority slot plan করো। Screen off, ঘুম।',
+    cls:'C-note',tags:['Planning','Notes']});
+
+  return slots;
+}
+
+function buildSunday(){
+  return [
+    {start:toMin(8,0),dur:60,title:'Light GATE revision',
+      sub:'সপ্তাহের weakest subject এর notes re-read করো — max 1 ঘন্টা। তারপর rest।',
+      cls:'C-gate',tags:['GATE','Light']},
+    {start:toMin(9,0),dur:30,title:'Next week planning',
+      sub:'আসছে সপ্তাহে কী focus করব — GATE topic, project milestone, job targets set করো।',
+      cls:'C-note',tags:['Planning']},
+    {start:toMin(9,30),dur:-1,title:'Complete rest — all day',
+      sub:'No coding, no DSA, no applications। Brain recovery ছাড়া পরের সপ্তাহ ভালো হবে না। 💜',
+      cls:'C-free',tags:['Rest'],fixed:true},
+  ];
+}
+
+/* ══ ACTIVE DETECTION ══ */
+function getActiveNext(slots){
+  const nm=nowMin();
+  let ai=-1,ni=-1;
+  for(let i=0;i<slots.length;i++){
+    const s=slots[i];
+    if(s.dur===-1) continue;
+    if(nm>=s.start&&nm<s.start+s.dur){ai=i;break}
+  }
+  if(ai>=0&&ai<slots.length-1) ni=ai+1;
+  return{ai,ni};
+}
+function progress(slot){
+  const nm=nowMin();
+  return Math.min(100,Math.max(0,((nm-slot.start)/slot.dur)*100));
+}
+
+/* ══ STATE ══ */
+let curDay=new Date().getDay();
+let overrides={};
+
+/* ══ RENDER ══ */
+function render(){
+  const today=new Date().getDay();
+  const d=new Date();
+  d.setDate(d.getDate()+(curDay-today));
+  const dStr=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const shift=getShift();
+  const isToday=curDay===today;
+
+  // Header text
+  document.getElementById('brand-date').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('day-title').textContent=DAYS[curDay]+(isToday?' — Today':'');
+  document.getElementById('date-sub').textContent=dStr+(isToday?' · live':'');
+
+  // GATE strip
+  const gs=document.getElementById('gate-strip');
+  gs.innerHTML=curDay>0?`<div class="gate-strip">🟢 GATE tonight: ${GATE_T[curDay].split('—')[0].trim()}</div>`:'';
+
+  // Shift info
+  const si=document.getElementById('shift-info');
+  if(isToday&&curDay>0){
+    si.textContent=shift>0
+      ?`⚡ Mac opened at ${fmt(PAGE_LOAD_MIN)} — schedule shifted +${shift} min`
+      :`✓ On-time — 6:30 AM schedule active`;
+  }else si.textContent='';
+
+  // Sidebar badge
+  const sb=document.getElementById('shift-badge');
+  if(isToday&&curDay>0){
+    sb.innerHTML=shift>0
+      ?`<div class="sbadge sb-late">+${shift}m</div>`
+      :`<div class="sbadge sb-ok">On time</div>`;
+  }else sb.innerHTML='';
+
+  // Tabs
+  const te=document.getElementById('day-tabs');
+  te.innerHTML='';
+  DAYS.forEach((nm,i)=>{
+    const b=document.createElement('button');
+    b.className='day-tab'+(i===curDay?' active':'')+(i===today?' is-today':'')+(i===0?' rest-day':'');
+    b.innerHTML=`<span class="tab-dot"></span><span class="tab-name">${nm}</span>${i===today?'<span class="tab-now">NOW</span>':''}`;
+    b.onclick=()=>{curDay=i;render()};
+    te.appendChild(b);
+  });
+
+  // Side stats
+  const se=document.getElementById('side-stats');
+  if(curDay===0){se.innerHTML=''}
+  else se.innerHTML=`
+    <div class="stat-row"><span class="stat-lbl">Study</span><span class="stat-val">~9.5h</span></div>
+    <div class="stat-row"><span class="stat-lbl">DSA</span><span class="stat-val" style="font-size:12px">${DSA_N[curDay]}</span></div>
+    <div class="stat-row"><span class="stat-lbl">GATE topic</span><span class="stat-val" style="font-size:11px">${GATE_T[curDay].split('—')[0].trim()}</span></div>`;
+
+  // Legend
+  document.getElementById('legend').innerHTML=[
+    {c:'#42D4C8',l:'GATE'},{c:'#3EC6A0',l:'AI/ML'},{c:'#F97B5A',l:'DSA'},
+    {c:'#59A8F5',l:'Job Search'},{c:'#A78BFA',l:'Project'},{c:'#F5C842',l:'Profile'},
+    {c:'#E06BCD',l:'Mock'},{c:'#88C46A',l:'Reading'},{c:'#9898B8',l:'Notes'},
+  ].map(x=>`<div class="leg"><div class="leg-dot" style="background:${x.c}"></div>${x.l}</div>`).join('');
+
+  // Body
+  const body=document.getElementById('body-area');
+
+  if(curDay===0){
+    // Sunday special
+    body.style.display='flex';body.style.flexDirection='column';
+    const allSlots=buildSunday();
+    body.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:32px;text-align:center">
+      <div style="font-size:56px;margin-bottom:14px">🌙</div>
+      <div style="font-family:Space Grotesk,sans-serif;font-size:26px;font-weight:800;margin-bottom:10px;letter-spacing:-.02em">Sunday — Rest Day</div>
+      <p style="font-size:15px;color:var(--txt2);line-height:1.9;max-width:440px;margin-bottom:24px">
+        Brain recover না হলে পরের সপ্তাহটা ভালো হবে না।<br>Max 1–2 ঘন্টা light GATE revision, তারপর সম্পূর্ণ rest।<br><br>তুমি অনেক কষ্ট করছ — রেস্ট টা earn করেছ। 💜
+      </p>
+      <div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:480px">
+        ${allSlots.map((s,i)=>{
+          if(s.dur===-1) return `<div class="slot C-free"><span class="s-time">Daytime</span><div class="s-body"><div class="s-title">${s.title}</div><div class="s-sub">${s.sub}</div></div></div>`;
+          return `<div class="slot ${s.cls}"><span class="s-time">${rng(s.start,s.dur)}</span><div class="s-body"><div class="s-title">${s.title}</div><div class="s-sub">${s.sub}</div></div></div>`;
+        }).join('')}
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Weekday — split into 2 cols at lunch boundary
+  const allSlots=buildSlots(curDay).map((s,i)=>{
+    const ov=overrides[`${curDay}-${i}`]||{};
+    return{...s,...ov,_idx:i,_raw:s};
+  });
+
+  const {ai,ni}=isToday?getActiveNext(allSlots):{ai:-1,ni:-1};
+
+  // Left col: before+including lunch | Right col: after lunch
+  const lunchIdx=allSlots.findIndex(s=>s.fixed&&s.cls==='C-lunch');
+  const leftSlots=allSlots.slice(0,lunchIdx+1);
+  const rightSlots=allSlots.slice(lunchIdx+1);
+
+  function renderSlot(slot,globalIdx){
+    const isActive=globalIdx===ai&&isToday;
+    const isNext=globalIdx===ni&&isToday;
+    const isDone=isToday&&globalIdx<ai&&ai>=0;
+    const prog=isActive?progress(slot._raw||slot):0;
+    const tagHtml=(slot.tags||[]).map(t=>{
+      const cls=t==='FIXED'?'T-fixed':t==='GATE'||t==='Mock Test'?'T-gate-s':
+        t==='AI/ML'?'T-aiml':t==='DSA'?'T-dsa':t==='Job Search'?'T-job':
+        t==='Backend Project'||t==='AI Project'?'T-proj':t==='Profile Build'?'T-profile':
+        t==='Mock Interview'?'T-mock':'';
+      return cls?`<span class="tag ${cls}">${t}</span>`:'';
+    }).join('');
+
+    let clsList=`slot ${slot.cls}`;
+    if(isActive) clsList+=' active-now';
+    else if(isNext) clsList+=' up-next';
+    else if(isDone) clsList+=' slot-done';
+
+    const timeStr=slot.dur===-1?'—':rng((slot._raw||slot).start,slot.dur);
+
+    return `<div class="${clsList}" onclick="openEdit(${globalIdx})" data-gi="${globalIdx}">
+      <span class="s-time">${timeStr}</span>
+      <div class="s-body">
+        <div class="s-title">${slot.title}</div>
+        ${slot.sub?`<div class="s-sub">${slot.sub}</div>`:''}
+        ${tagHtml?`<div class="s-tags">${tagHtml}</div>`:''}
+      </div>
+      <span class="edit-ico">✎</span>
+      ${isActive?`<div class="prog-bar" style="width:${prog}%"></div>`:''}
+    </div>`;
+  }
+
+  body.style.display='grid';
+  body.style.gridTemplateColumns='1fr 1fr';
+  body.style.flexDirection='';
+
+  const leftHTML=`<div class="col">
+    <div class="sec-lbl">Morning & Forenoon</div>
+    ${leftSlots.map((s,li)=>renderSlot(s,li)).join('')}
+  </div>`;
+
+  const rightHTML=`<div class="col">
+    <div class="sec-lbl">Afternoon & Night</div>
+    ${rightSlots.map((s,ri)=>renderSlot(s,lunchIdx+1+ri)).join('')}
+  </div>`;
+
+  body.innerHTML=leftHTML+rightHTML;
+
+  // Auto-scroll active into view
+  setTimeout(()=>{
+    const el=document.querySelector('.active-now');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  },80);
+}
+
+/* ══ NAV ══ */
+function goToday(){curDay=new Date().getDay();render()}
+function nextDay(){curDay=(curDay+1)%7;render()}
+function prevDay(){curDay=(curDay+6)%7;render()}
+
+/* ══ MODAL ══ */
+let eIdx=null;
+function openEdit(idx){
+  eIdx=idx;
+  const slots=curDay===0?buildSunday():buildSlots(curDay);
+  const raw=slots[idx];
+  const ov=overrides[`${curDay}-${idx}`]||{};
+  const slot={...raw,...ov};
+  document.getElementById('e-title').value=slot.title;
+  document.getElementById('e-sub').value=slot.sub||'';
+  document.getElementById('e-type').value=slot.cls;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+function saveEdit(){
+  overrides[`${curDay}-${eIdx}`]={
+    title:document.getElementById('e-title').value,
+    sub:document.getElementById('e-sub').value,
+    cls:document.getElementById('e-type').value,
+  };
+  closeModal();render();
+}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+/* ══ CLOCK ══ */
+let lastRendMin=-1;
+function tick(){
+  const n=new Date();
+  const h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
+  const hh=h%12===0?12:h%12,ap=h<12?'AM':'PM';
+  document.getElementById('live-clock').textContent=`${hh}:${m.toString().padStart(2,'0')} ${ap}`;
+  const nm=toMin(h,m);
+  if(nm!==lastRendMin&&s<5){lastRendMin=nm;if(curDay===new Date().getDay())render();}
+  if(h===0&&m===0&&s<3){curDay=new Date().getDay();render();}
+}
+setInterval(tick,1000);tick();
+
+/* ══ KEYBOARD ══ */
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('modal').classList.contains('open'))return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')nextDay();
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')prevDay();
+  if(e.key==='t'||e.key==='T')goToday();
+});
+
+render();
+</script>
+</body>
+</html>
