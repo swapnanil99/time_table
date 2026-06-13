@@ -482,7 +482,8 @@ function tagCls(t){
     'Backend Project':'T-proj','AI Project':'T-proj',
     'Profile Build':'T-profile','Mock Interview':'T-mock',
     'Planning':'T-note','Notes':'T-note',
-    'FIXED':'T-fixed','Break':'T-break','Light':'T-note'
+    'FIXED':'T-fixed','Break':'T-break','Light':'T-note',
+    'Backend':'T-proj','Profile':'T-profile'
   };
   return map[t]||'';
 }
@@ -704,11 +705,20 @@ function saveEdit(){
 
   const catSelect = document.getElementById('e-cat');
   const catVal = catSelect.value;
-  // Extract clean tag name from the emoji label (e.g. "🟢 GATE Study" -> "GATE")
-  const catText = catSelect.options[catSelect.selectedIndex].text;
-  let tagName = catText.replace(/[^\w\s/]/g, '').trim().split(' ')[0];
-  if(tagName === "AI/ML") tagName = "AI/ML"; // preserve special case
-  if(tagName === "Backend") tagName = "Backend Project";
+  // Map internal value to Display Tag
+  const tagMap = {
+    'gate': 'GATE',
+    'aiml': 'AI/ML',
+    'dsa': 'DSA',
+    'job': 'Job Search',
+    'proj': 'Backend',
+    'profile': 'Profile',
+    'mock': 'Mock Interview',
+    'note': 'Planning',
+    'free': 'FIXED',
+    'lunch': 'FIXED',
+    'sleep': 'Planning'
+  };
 
   const newOv = {
     title:document.getElementById('e-title').value,
@@ -716,7 +726,7 @@ function saveEdit(){
     cat:catVal,
     start: startMins,
     dur: parseInt(document.getElementById('e-dur').value),
-    tags: [tagName]
+    tags: [tagMap[catVal] || 'Notes']
   };
   
   // Push to Firebase for cross-device sync
