@@ -354,12 +354,17 @@ function brk(start,dur,label){
   return{start,dur,title:label,sub:'',cat:'break',tags:[],isBreak:true};
 }
 
+function makeSlotId(day,start,dur,cat,title){
+  return `${day}-${start}-${dur}-${cat}-${title.replace(/\s+/g,'_')}`;
+}
+
 function buildSlots(d){
   const shift=getShift();
   const arr=[];
 
   // Helper to handle day-relative slots
   const slot = (start, dur, title, sub, cat, tags, opts = {}) => ({
+    id: makeSlotId(d, start, dur, cat, title),
     start, dur, title, sub, cat, tags, isBreak: false, ...opts
   });
   const brk = (start, dur, label) => ({
@@ -490,23 +495,31 @@ function tagCls(t){
 
 /* ── STATE ── */
 let curDay=new Date().getDay();
-let overrides={};
+let overrides=JSON.parse(localStorage.getItem('timetable_overrides') || '{}');
 
 // Firebase Configuration (Replace with your own if needed)
 const firebaseConfig = {
   databaseURL: "https://timetable-sync-default-rtdb.firebaseio.com/" 
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch (err) {
+  db = null;
+}
 
 // Sync from Firebase
-db.ref("overrides").on("value", (snapshot) => {
-  const data = snapshot.val();
-  if (data) {
-    overrides = data;
-    render();
-  }
-});
+if (db) {
+  db.ref("overrides").on("value", (snapshot) => {
+    const data = snapshot.val();
+    if (data && typeof data === 'object') {
+      overrides = { ...overrides, ...data };
+      localStorage.setItem('timetable_overrides', JSON.stringify(overrides));
+      render();
+    }
+  });
+}
 
 /* ── RENDER ── */
 const isDesktop=()=>window.innerWidth>=700;
@@ -523,9 +536,7 @@ function render(){
   // Schedule Logic moved up to ensure data is ready for stats
   const schedEl=document.getElementById('sched');
   let allSlots=buildSlots(curDay).map((s,i)=>{
-    // Find matching override for this specific slot title
-    const ovKey = Object.keys(overrides).find(k => k.startsWith(`${curDay}-`) && k.endsWith(s.title.replace(/\s+/g, '_')));
-    const ov=ovKey ? overrides[ovKey] : {};
+    const ov=overrides[s.id] || {};
     return{...s,...ov,_idx:i,_raw:s};
   });
 
@@ -623,7 +634,7 @@ function openEdit(idx){
   const slots=buildSlots(curDay);
   const raw=slots[idx];
   if(!raw||raw.isBreak)return;
-  const ov=overrides[`${curDay}-${idx}`]||{};
+  const ov=overrides[raw.id]||{};
   const s={...raw,...ov};
   document.getElementById('e-title').value=s.title;
   document.getElementById('e-sub').value=s.sub||'';
@@ -665,8 +676,7 @@ function saveEdit(){
 
   // Logic: We identify the override by the ORIGINAL title (the one hardcoded in the script)
   // so that even if the title is changed, we know which task we are overriding.
-  const baseTitle = originalSlot._raw ? originalSlot._raw.title : originalSlot.title;
-  const uniqueKey = `${curDay}-${baseTitle.replace(/\s+/g, '_')}`;
+  const uniqueKey = originalSlot.id;
 
   const newOv = {
     title: document.getElementById('e-title').value,
@@ -677,7 +687,12 @@ function saveEdit(){
     tags: [tagMap[catVal] || 'Notes']
   };
   
-  db.ref("overrides/" + uniqueKey).set(newOv);
+  overrides[uniqueKey] = newOv;
+  localStorage.setItem('timetable_overrides', JSON.stringify(overrides));
+  render();
+  if (db) {
+    db.ref("overrides/" + uniqueKey).set(newOv);
+  }
   closeModal();
 }
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal()});
@@ -760,10 +775,15 @@ document.addEventListener('keydown',e=>{
 });
 
 window.addEventListener('resize',()=>render());
-document.addEventListener('DOMContentLoaded', () => {
+const initApp = () => {
   updateNotifBtn();
   render();
-});
+};
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 </script>
 </body>
 </html>
