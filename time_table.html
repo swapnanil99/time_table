@@ -272,6 +272,9 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
       <button class="mbtn cancel" onclick="closeModal()">Cancel</button>
       <button class="mbtn save" onclick="saveEdit()">Save</button>
     </div>
+    <div style="margin-top: 15px; text-align: center;">
+      <button class="nbtn" onclick="requestNotificationPermission()" id="notif-btn" style="width: 100%; border-radius: 10px; padding: 10px; font-size: 12px;">Enable Browser Notifications</button>
+    </div>
     <div class="mhint">Changes saved for this session</div>
   </div>
 </div>
@@ -681,6 +684,49 @@ function setupLayout(){
   document.getElementById('desktop-legend').style.display=desk?'flex':'none';
 }
 
+/* ── NOTIFICATIONS ── */
+function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    alert("This browser does not support desktop notification");
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    updateNotifBtn();
+    if (permission === "granted") {
+      new Notification("Notifications Enabled!", { body: "You will receive alerts for new tasks.", icon: "https://cdn-icons-png.flaticon.com/512/3119/3119338.png" });
+    }
+  });
+}
+
+function updateNotifBtn() {
+  const btn = document.getElementById('notif-btn');
+  if (!btn) return;
+  if (Notification.permission === "granted") {
+    btn.textContent = "✓ Notifications Active";
+    btn.style.opacity = "0.6";
+    btn.disabled = true;
+  } else if (Notification.permission === "denied") {
+    btn.textContent = "Notifications Blocked";
+    btn.style.color = "#ff4d4d";
+  }
+}
+
+let lastNotifiedSlot = null;
+function checkNotifications(slots) {
+  if (Notification.permission !== "granted") return;
+  const { ai } = getActiveNext(slots);
+  if (ai >= 0) {
+    const slot = slots[ai];
+    if (lastNotifiedSlot !== slot.title) {
+      new Notification("New Task: " + slot.title, {
+        body: slot.sub || "Time to start your next session!",
+        icon: "https://cdn-icons-png.flaticon.com/512/3119/3119338.png"
+      });
+      lastNotifiedSlot = slot.title;
+    }
+  }
+}
+
 let lastRendMin=-1;
 function tick(){
   const n=new Date();
@@ -692,7 +738,8 @@ function tick(){
   // Force update UI every minute or if day changes
   if(nm!==lastRendMin){
     lastRendMin=nm;
-    // Always render if it's "Today" to update progress bars/LIVE status
+    const slots = buildSlots(new Date().getDay());
+    checkNotifications(slots);
     if(curDay===new Date().getDay()) render();
   }
   
@@ -708,7 +755,10 @@ document.addEventListener('keydown',e=>{
 });
 
 window.addEventListener('resize',()=>render());
-render();
+document.addEventListener('DOMContentLoaded', () => {
+  updateNotifBtn();
+  render();
+});
 </script>
 </body>
 </html>
