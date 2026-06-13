@@ -523,9 +523,9 @@ function render(){
   // Schedule Logic moved up to ensure data is ready for stats
   const schedEl=document.getElementById('sched');
   let allSlots=buildSlots(curDay).map((s,i)=>{
-    // Match overrides by title instead of index to maintain sync if slots shift
-    const ovKey = Object.keys(overrides).find(k => k.startsWith(`${curDay}-`) && overrides[k].title === s.title) || `${curDay}-${i}`;
-    const ov=overrides[ovKey]||{};
+    // Find matching override for this specific slot title
+    const ovKey = Object.keys(overrides).find(k => k.startsWith(`${curDay}-`) && k.endsWith(s.title.replace(/\s+/g, '_')));
+    const ov=ovKey ? overrides[ovKey] : {};
     return{...s,...ov,_idx:i,_raw:s};
   });
 
@@ -663,6 +663,11 @@ function saveEdit(){
   const slots = buildSlots(curDay);
   const originalSlot = slots[eIdx];
 
+  // Logic: We identify the override by the ORIGINAL title (the one hardcoded in the script)
+  // so that even if the title is changed, we know which task we are overriding.
+  const baseTitle = originalSlot._raw ? originalSlot._raw.title : originalSlot.title;
+  const uniqueKey = `${curDay}-${baseTitle.replace(/\s+/g, '_')}`;
+
   const newOv = {
     title: document.getElementById('e-title').value,
     sub: document.getElementById('e-sub').value,
@@ -672,10 +677,7 @@ function saveEdit(){
     tags: [tagMap[catVal] || 'Notes']
   };
   
-  // Use a unique key based on day and original slot title to ensure persistent sync
-  const uniqueKey = `${curDay}-${originalSlot.title.replace(/\s+/g, '_')}`;
   db.ref("overrides/" + uniqueKey).set(newOv);
-  
   closeModal();
 }
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal()});
