@@ -254,6 +254,10 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
     <h3>✎ Edit Slot</h3>
     <label>Title</label><input type="text" id="e-title">
     <label>Details</label><textarea id="e-sub"></textarea>
+    <div style="display: flex; gap: 10px;">
+      <div style="flex: 1;"><label>Start Time (Min)</label><input type="number" id="e-start"></div>
+      <div style="flex: 1;"><label>Duration (Min)</label><input type="number" id="e-dur"></div>
+    </div>
     <label>Category</label>
     <select id="e-cat">
       <option value="gate">🟢 GATE Study</option>
@@ -279,7 +283,10 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
   </div>
 </div>
 
-<script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script>
+
 const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 const GATE_T={
@@ -484,6 +491,22 @@ function tagCls(t){
 let curDay=new Date().getDay();
 let overrides={};
 
+// Firebase Configuration (Replace with your own if needed)
+const firebaseConfig = {
+  databaseURL: "https://timetable-sync-default-rtdb.firebaseio.com/" 
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Sync from Firebase
+db.ref("overrides").on("value", (snapshot) => {
+  const data = snapshot.val();
+  if (data) {
+    overrides = data;
+    render();
+  }
+});
+
 /* ── RENDER ── */
 const isDesktop=()=>window.innerWidth>=700;
 
@@ -664,21 +687,25 @@ function openEdit(idx){
   document.getElementById('e-title').value=s.title;
   document.getElementById('e-sub').value=s.sub||'';
   document.getElementById('e-cat').value=s.cat||'note';
+  document.getElementById('e-start').value=s.start;
+  document.getElementById('e-dur').value=s.dur;
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function saveEdit(){
-  // Get index from the global list based on current render
-  const slots = buildSlots(curDay);
-  const currentSlot = slots[eIdx];
-  
-  overrides[`${curDay}-${eIdx}`]={
+  const newOv = {
     title:document.getElementById('e-title').value,
     sub:document.getElementById('e-sub').value,
     cat:document.getElementById('e-cat').value,
-    tags: [document.getElementById('e-cat').options[document.getElementById('e-cat').selectedIndex].text.split(' ').pop()] // Update tags based on category
+    start: parseInt(document.getElementById('e-start').value),
+    dur: parseInt(document.getElementById('e-dur').value),
+    tags: [document.getElementById('e-cat').options[document.getElementById('e-cat').selectedIndex].text.split(' ').pop()]
   };
-  closeModal();render();
+  
+  // Push to Firebase for cross-device sync
+  db.ref("overrides/" + curDay + "-" + eIdx).set(newOv);
+  
+  closeModal();
 }
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal()});
 
