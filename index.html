@@ -255,7 +255,7 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
     <label>Title</label><input type="text" id="e-title">
     <label>Details</label><textarea id="e-sub"></textarea>
     <div style="display: flex; gap: 10px;">
-      <div style="flex: 1;"><label>Start Time (Min)</label><input type="number" id="e-start"></div>
+      <div style="flex: 1;"><label>Start Time</label><input type="time" id="e-start-time"></div>
       <div style="flex: 1;"><label>Duration (Min)</label><input type="number" id="e-dur"></div>
     </div>
     <label>Category</label>
@@ -687,19 +687,36 @@ function openEdit(idx){
   document.getElementById('e-title').value=s.title;
   document.getElementById('e-sub').value=s.sub||'';
   document.getElementById('e-cat').value=s.cat||'note';
-  document.getElementById('e-start').value=s.start;
+  
+  // Convert minutes to HH:MM for the time input
+  const h = Math.floor(s.start / 60);
+  const m = s.start % 60;
+  document.getElementById('e-start-time').value = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  
   document.getElementById('e-dur').value=s.dur;
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function saveEdit(){
+  const timeVal = document.getElementById('e-start-time').value;
+  const [h, m] = timeVal.split(':').map(Number);
+  const startMins = h * 60 + m;
+
+  const catSelect = document.getElementById('e-cat');
+  const catVal = catSelect.value;
+  // Extract clean tag name from the emoji label (e.g. "🟢 GATE Study" -> "GATE")
+  const catText = catSelect.options[catSelect.selectedIndex].text;
+  let tagName = catText.replace(/[^\w\s/]/g, '').trim().split(' ')[0];
+  if(tagName === "AI/ML") tagName = "AI/ML"; // preserve special case
+  if(tagName === "Backend") tagName = "Backend Project";
+
   const newOv = {
     title:document.getElementById('e-title').value,
     sub:document.getElementById('e-sub').value,
-    cat:document.getElementById('e-cat').value,
-    start: parseInt(document.getElementById('e-start').value),
+    cat:catVal,
+    start: startMins,
     dur: parseInt(document.getElementById('e-dur').value),
-    tags: [document.getElementById('e-cat').options[document.getElementById('e-cat').selectedIndex].text.split(' ').pop()]
+    tags: [tagName]
   };
   
   // Push to Firebase for cross-device sync
