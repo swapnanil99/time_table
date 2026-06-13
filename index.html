@@ -520,72 +520,12 @@ function render(){
   const isToday=curDay===today;
   const desk=isDesktop();
 
-  // Header
-  const dTitle=document.getElementById('day-title');
-  dTitle.innerHTML=`${DAYS[curDay]}${isToday?' <span>— Today</span>':''}`;
-  document.getElementById('date-line').textContent=dStr+(isToday?' · live':'');
-
-  // Gate strip
-  const gsEl=document.getElementById('gate-strip-el');
-  gsEl.innerHTML=curDay>0?`<div class="gate-strip">🟢 GATE tonight: ${GATE_T[curDay].split('—')[0].trim()}</div>`:'';
-
-  // Shift info
-  const slEl=document.getElementById('shift-line');
-  if(isToday&&curDay>0){
-    slEl.textContent=shift>0
-      ?`⚡ Mac opened ${fmt(PAGE_LOAD_MIN)} — schedule shifted +${shift} min`
-      :`✓ On-time — 6:30 AM schedule`;
-  }else slEl.textContent='';
-
-  // Shift badge
-  const sbEl=document.getElementById('shift-badge');
-  if(isToday&&curDay>0){
-    sbEl.innerHTML=shift>0
-      ?`<div class="sbadge sb-late">+${shift}m</div>`
-      :`<div class="sbadge sb-ok">✓</div>`;
-  }else sbEl.innerHTML='';
-
-  // Tabs
-  const te=document.getElementById('day-tabs');
-  te.innerHTML='';
-  DAYS.forEach((nm,i)=>{
-    const b=document.createElement('button');
-    b.className='day-tab'+(i===curDay?' active':'')+(i===today?' is-today':'');
-    b.innerHTML=`<span class="tab-dot"></span><span class="tab-name">${desk?nm:nm.slice(0,3)}</span>${i===today?'<span class="tab-now">NOW</span>':''}`;
-    b.onclick=()=>{curDay=i;render()};
-    te.appendChild(b);
-  });
-
-  // Stats
-  const LEGEND_DATA=[
-    {c:'#42D4C8',l:'GATE'},{c:'#3EC6A0',l:'AI/ML'},{c:'#F97B5A',l:'DSA'},
-    {c:'#59A8F5',l:'Job'},{c:'#A78BFA',l:'Project'},{c:'#F5C842',l:'Profile'},
-    {c:'#E06BCD',l:'Mock'},{c:'#9898B8',l:'Notes'},
-  ];
-  if(desk){
-    const ds=document.getElementById('desktop-stats');
-    const dl=document.getElementById('desktop-legend');
-    ds.style.display=curDay>0?'flex':'none';
-    dl.style.display='flex';
-    if(curDay>0){
-      ds.innerHTML=`
-        <div class="stat-row" style="margin-bottom:4px"><span class="stat-lbl">Study</span><span class="stat-val">~10h</span></div>
-        <div class="stat-row" style="margin-bottom:4px"><span class="stat-lbl">DSA</span><span class="stat-val" style="font-size:12px">${curDay>0?DSA_N[curDay]:'—'}</span></div>
-        <div class="stat-row"><span class="stat-lbl">GATE</span><span class="stat-val" style="font-size:11px">${GATE_T[curDay].split('—')[0].trim()}</span></div>`;
-    }
-    dl.innerHTML=LEGEND_DATA.map(x=>`<div class="leg"><div class="leg-dot" style="background:${x.c}"></div>${x.l}</div>`).join('');
-  }else{
-    document.getElementById('stats-row').innerHTML=curDay>0?`
-      <div class="stat-card"><div class="stat-lbl">Study</div><div class="stat-val">~10h</div></div>
-      <div class="stat-card"><div class="stat-lbl">DSA</div><div class="stat-val" style="font-size:12px">${DSA_N[curDay]||'—'}</div></div>
-      <div class="stat-card"><div class="stat-lbl">GATE</div><div class="stat-val" style="font-size:12px">${GATE_T[curDay].split('—')[0].trim()}</div></div>`:'';
-    document.getElementById('legend-row').innerHTML=LEGEND_DATA.map(x=>`<div class="leg"><div class="leg-dot" style="background:${x.c}"></div>${x.l}</div>`).join('');
-  }
-
-  // Schedule
+  // Schedule Logic moved up to ensure data is ready for stats
   const schedEl=document.getElementById('sched');
   let allSlots=buildSlots(curDay).map((s,i)=>{
-    const ov=overrides[`${curDay}-${i}`]||{};
+    // Match overrides by title instead of index to maintain sync if slots shift
+    const ovKey = Object.keys(overrides).find(k => k.startsWith(`${curDay}-`) && overrides[k].title === s.title) || `${curDay}-${i}`;
+    const ov=overrides[ovKey]||{};
     return{...s,...ov,_idx:i,_raw:s};
   });
 
@@ -705,7 +645,7 @@ function saveEdit(){
 
   const catSelect = document.getElementById('e-cat');
   const catVal = catSelect.value;
-  // Map internal value to Display Tag
+  
   const tagMap = {
     'gate': 'GATE',
     'aiml': 'AI/ML',
@@ -720,17 +660,21 @@ function saveEdit(){
     'sleep': 'Planning'
   };
 
+  const slots = buildSlots(curDay);
+  const originalSlot = slots[eIdx];
+
   const newOv = {
-    title:document.getElementById('e-title').value,
-    sub:document.getElementById('e-sub').value,
-    cat:catVal,
+    title: document.getElementById('e-title').value,
+    sub: document.getElementById('e-sub').value,
+    cat: catVal,
     start: startMins,
     dur: parseInt(document.getElementById('e-dur').value),
     tags: [tagMap[catVal] || 'Notes']
   };
   
-  // Push to Firebase for cross-device sync
-  db.ref("overrides/" + curDay + "-" + eIdx).set(newOv);
+  // Use a unique key based on day and original slot title to ensure persistent sync
+  const uniqueKey = `${curDay}-${originalSlot.title.replace(/\s+/g, '_')}`;
+  db.ref("overrides/" + uniqueKey).set(newOv);
   
   closeModal();
 }
