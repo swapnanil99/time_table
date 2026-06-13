@@ -49,6 +49,7 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
 .day-tab.active .tab-dot{background:var(--rev);box-shadow:0 0 6px rgba(139,123,248,.8)}
 .day-tab.is-today .tab-dot{background:var(--rev);box-shadow:0 0 8px rgba(139,123,248,.9)}
 .tab-now{font-size:8px;font-weight:800;background:var(--rev);color:#fff;border-radius:20px;padding:1px 6px}
+.mobile-stats,.mobile-legend{display:none}
 
 /* NAV ROW */
 .nav-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
@@ -207,6 +208,30 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
   .modal{border-radius:18px;max-width:440px;max-height:85vh;padding:26px}
   .modal-handle{display:none}
 }
+
+@media(max-width:699px){
+  .topbar{padding:16px 16px 14px}
+  .topbar-row1{align-items:flex-start}
+  .brand-name{font-size:19px;line-height:1.05}
+  .clock-pill{padding:10px 14px;border-radius:18px}
+  .clock-time{font-size:20px;text-align:center;min-width:82px}
+  .nav-row{margin-top:10px}
+  .day-tabs{display:flex;flex-direction:column;gap:10px;overflow:visible;padding-top:10px;padding-bottom:10px}
+  .day-tab{flex-direction:row;justify-content:space-between;align-items:center;padding:16px 18px;border-radius:18px;background:transparent;border:1px solid transparent;min-height:56px}
+  .day-tab .tab-dot{width:12px;height:12px;background:#6b668d;box-shadow:none}
+  .day-tab .tab-name{font-size:18px;letter-spacing:-0.02em}
+  .day-tab.active{background:linear-gradient(90deg,rgba(139,123,248,0.12),rgba(62,198,160,0.08));border-color:rgba(139,123,248,0.45);box-shadow:0 0 0 1px rgba(139,123,248,0.08) inset}
+  .day-tab.active .tab-dot{background:#7d6cff;box-shadow:0 0 0 6px rgba(125,108,255,0.12)}
+  .day-tab.is-today .tab-now{font-size:12px;letter-spacing:.08em}
+  .mobile-stats{display:flex;flex-direction:column;gap:8px;padding-top:14px}
+  .mobile-legend{display:flex;flex-wrap:wrap;gap:10px;padding:14px 0 4px;border-top:1px solid var(--brd);margin-top:12px}
+  .mobile-stats .stat-card{width:100%;border-radius:18px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;min-width:0}
+  .mobile-stats .stat-lbl{font-size:13px;letter-spacing:.12em}
+  .mobile-stats .stat-val{font-size:20px}
+  .mobile-legend .leg{font-size:12px}
+  .mobile-legend .leg-dot{width:9px;height:9px}
+  .stats-row,.legend-row{display:none}
+}
 </style>
 </head>
 <body>
@@ -228,6 +253,8 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
     <button class="nbtn" onclick="nextDay()">→</button>
   </div>
   <div class="day-tabs" id="day-tabs"></div>
+  <div class="mobile-stats" id="mobile-stats"></div>
+  <div class="mobile-legend" id="mobile-legend"></div>
   <!-- desktop only extras -->
   <div class="desktop-stats" id="desktop-stats" style="display:none"></div>
   <div class="desktop-legend" id="desktop-legend" style="display:none"></div>
@@ -566,6 +593,17 @@ function render(){
   const lRow = document.getElementById('legend-row');
   if (lRow) {
     lRow.innerHTML = LEGEND_DATA.map(x=>`<div class="leg"><div class="leg-dot" style="background:${x.c}"></div>${x.l}</div>`).join('');
+  }
+
+  const msRow = document.getElementById('mobile-stats');
+  if (msRow) {
+    msRow.innerHTML = statsData.map(s => `
+      <div class="stat-card"><div class="stat-lbl">${s.label}</div><div class="stat-val">${s.value}</div></div>
+    `).join('');
+  }
+  const mlRow = document.getElementById('mobile-legend');
+  if (mlRow) {
+    mlRow.innerHTML = LEGEND_DATA.map(x=>`<div class="leg"><div class="leg-dot" style="background:${x.c}"></div>${x.l}</div>`).join('');
   }
 
   // Other header badges
