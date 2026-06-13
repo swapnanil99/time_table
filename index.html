@@ -668,10 +668,15 @@ function openEdit(idx){
 }
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function saveEdit(){
+  // Get index from the global list based on current render
+  const slots = buildSlots(curDay);
+  const currentSlot = slots[eIdx];
+  
   overrides[`${curDay}-${eIdx}`]={
     title:document.getElementById('e-title').value,
     sub:document.getElementById('e-sub').value,
     cat:document.getElementById('e-cat').value,
+    tags: [document.getElementById('e-cat').options[document.getElementById('e-cat').selectedIndex].text.split(' ').pop()] // Update tags based on category
   };
   closeModal();render();
 }
