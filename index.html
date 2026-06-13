@@ -348,7 +348,8 @@ function getShift(){
 
 /* ── SLOT BUILDERS ── */
 function slot(start,dur,title,sub,cat,tags,opts={}){
-  return{start,dur,title,sub,cat,tags,isBreak:false,...opts};
+  const day = opts.day ?? window.__slotBuildDay ?? new Date().getDay();
+  return{ id: makeSlotId(day,start,dur,cat,title), start,dur,title,sub,cat,tags,isBreak:false,...opts };
 }
 function brk(start,dur,label){
   return{start,dur,title:label,sub:'',cat:'break',tags:[],isBreak:true};
@@ -361,15 +362,7 @@ function makeSlotId(day,start,dur,cat,title){
 function buildSlots(d){
   const shift=getShift();
   const arr=[];
-
-  // Helper to handle day-relative slots
-  const slot = (start, dur, title, sub, cat, tags, opts = {}) => ({
-    id: makeSlotId(d, start, dur, cat, title),
-    start, dur, title, sub, cat, tags, isBreak: false, ...opts
-  });
-  const brk = (start, dur, label) => ({
-    start, dur, title: label, sub: '', cat: 'break', tags: [], isBreak: true
-  });
+  window.__slotBuildDay = d;
 
   // 1. Add Early Morning "Wrap-over" tasks (12 AM - 6:30 AM)
   const prevDayIdx = (d + 6) % 7;
@@ -533,6 +526,86 @@ function render(){
   const isToday=curDay===today;
   const desk=isDesktop();
 
+  // Header
+  const dTitle=document.getElementById('day-title');
+  if(dTitle) dTitle.innerHTML=`${DAYS[curDay]}${isToday?' <span>— Today</span>':''}`;
+  const dLine=document.getElementById('date-line');
+  if(dLine) dLine.textContent=dStr+(isToday?' · live':'');
+
+  // Side/top summaries
+  const statsData = [
+    { label: 'Study', value: '~10h' },
+    { label: 'DSA', value: DSA_N[curDay] || '—' },
+    { label: 'GATE', value: (GATE_T[curDay] || '—').split('—')[0].trim() }
+  ];
+  const LEGEND_DATA=[
+    {c:'#42D4C8',l:'GATE'},{c:'#3EC6A0',l:'AI/ML'},{c:'#F97B5A',l:'DSA'},
+    {c:'#59A8F5',l:'Job'},{c:'#A78BFA',l:'Project'},{c:'#F5C842',l:'Profile'},
+    {c:'#E06BCD',l:'Mock'},{c:'#9898B8',l:'Notes'},
+  ];
+
+  const ds = document.getElementById('desktop-stats');
+  const dl = document.getElementById('desktop-legend');
+  if (ds) {
+    ds.style.display = desk ? 'flex' : 'none';
+    ds.innerHTML = statsData.map(s => `
+      <div class="stat-row" style="margin-bottom:4px"><span class="stat-lbl">${s.label}</span><span class="stat-val" style="font-size:12px">${s.value}</span></div>
+    `).join('');
+  }
+  if (dl) {
+    dl.style.display = desk ? 'flex' : 'none';
+    dl.innerHTML = LEGEND_DATA.map(x=>`<div class="leg"><div class="leg-dot" style="background:${x.c}"></div>${x.l}</div>`).join('');
+  }
+
+  const sRow = document.getElementById('stats-row');
+  if (sRow) {
+    sRow.innerHTML = statsData.map(s => `
+      <div class="stat-card"><div class="stat-lbl">${s.label}</div><div class="stat-val" style="font-size:12px">${s.value}</div></div>
+    `).join('');
+  }
+  const lRow = document.getElementById('legend-row');
+  if (lRow) {
+    lRow.innerHTML = LEGEND_DATA.map(x=>`<div class="leg"><div class="leg-dot" style="background:${x.c}"></div>${x.l}</div>`).join('');
+  }
+
+  // Other header badges
+  const gsEl=document.getElementById('gate-strip-el');
+  if(gsEl) gsEl.innerHTML=curDay>0?`<div class="gate-strip">🟢 GATE tonight: ${GATE_T[curDay].split('—')[0].trim()}</div>`:'';
+
+  const slEl=document.getElementById('shift-line');
+  if(slEl){
+    if(isToday&&curDay>0){
+      slEl.textContent=shift>0
+        ?`⚡ Mac opened ${fmt(PAGE_LOAD_MIN)} — schedule shifted +${shift} min`
+        :`✓ On-time — 6:30 AM schedule`;
+    } else {
+      slEl.textContent='';
+    }
+  }
+
+  const sbEl=document.getElementById('shift-badge');
+  if(sbEl){
+    if(isToday&&curDay>0){
+      sbEl.innerHTML=shift>0
+        ?`<div class="sbadge sb-late">+${shift}m</div>`
+        :`<div class="sbadge sb-ok">✓</div>`;
+    } else {
+      sbEl.innerHTML='';
+    }
+  }
+
+  const te=document.getElementById('day-tabs');
+  if(te){
+    te.innerHTML='';
+    DAYS.forEach((nm,i)=>{
+      const b=document.createElement('button');
+      b.className='day-tab'+(i===curDay?' active':'')+(i===today?' is-today':'');
+      b.innerHTML=`<span class="tab-dot"></span><span class="tab-name">${desk?nm:nm.slice(0,3)}</span>${i===today?'<span class="tab-now">NOW</span>':''}`;
+      b.onclick=()=>{curDay=i;render()};
+      te.appendChild(b);
+    });
+  }
+
   // Schedule Logic moved up to ensure data is ready for stats
   const schedEl=document.getElementById('sched');
   let allSlots=buildSlots(curDay).map((s,i)=>{
@@ -662,8 +735,8 @@ function saveEdit(){
     'aiml': 'AI/ML',
     'dsa': 'DSA',
     'job': 'Job Search',
-    'proj': 'Backend',
-    'profile': 'Profile',
+    'proj': 'Backend Project',
+    'profile': 'Profile Build',
     'mock': 'Mock Interview',
     'note': 'Planning',
     'free': 'FIXED',
