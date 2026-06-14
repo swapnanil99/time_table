@@ -56,9 +56,11 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
 .nbtn{flex:1;padding:9px 0;border-radius:30px;border:1px solid var(--brd2);background:var(--surf2);color:var(--txt2);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;transition:all .14s}
 .nbtn:hover{background:var(--surf);color:var(--txt)}
 .nbtn.today{background:linear-gradient(135deg,var(--rev),#4030B8);border-color:transparent;color:#fff}
+.notif-toggle{width:100%;margin:10px 0 8px;padding:10px 12px;border-radius:14px;border:1px solid rgba(139,123,248,0.28);background:rgba(139,123,248,0.09);color:var(--txt);font-size:12px;font-weight:700;cursor:pointer}
+.notif-toggle.off{background:rgba(249,123,90,0.12);border-color:rgba(249,123,90,0.25);color:#ffb29d}
 
 /* DAY HEADER */
-.day-header{padding:14px 16px 0}
+.day-header{padding:10px 0 0}
 .day-title{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
 .day-title span{background:linear-gradient(90deg,var(--rev),var(--aiml));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .date-line{font-size:12px;color:var(--txt3);margin-top:4px}
@@ -247,11 +249,18 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
       <div id="shift-badge"></div>
     </div>
   </div>
+  <div class="day-header">
+    <div class="day-title" id="day-title">—</div>
+    <div class="date-line" id="date-line">—</div>
+    <div id="gate-strip-el"></div>
+    <div class="shift-line" id="shift-line"></div>
+  </div>
   <div class="nav-row">
     <button class="nbtn" onclick="prevDay()">←</button>
     <button class="nbtn today" onclick="goToday()">Today</button>
     <button class="nbtn" onclick="nextDay()">→</button>
   </div>
+  <button class="notif-toggle" id="notif-toggle" onclick="toggleNotifications()">Notifications: On</button>
   <div class="day-tabs" id="day-tabs"></div>
   <div class="mobile-stats" id="mobile-stats"></div>
   <div class="mobile-legend" id="mobile-legend"></div>
@@ -262,12 +271,6 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
 
 <!-- MAIN -->
 <div class="main-desktop" id="main-area">
-  <div class="day-header">
-    <div class="day-title" id="day-title">—</div>
-    <div class="date-line" id="date-line">—</div>
-    <div id="gate-strip-el"></div>
-    <div class="shift-line" id="shift-line"></div>
-  </div>
   <div class="stats-row" id="stats-row"></div>
   <div class="legend-row" id="legend-row"></div>
   <div class="sched" id="sched"></div>
@@ -516,6 +519,7 @@ function tagCls(t){
 /* ── STATE ── */
 let curDay=new Date().getDay();
 let overrides=JSON.parse(localStorage.getItem('timetable_overrides') || '{}');
+let notificationsEnabled = localStorage.getItem('timetable_notifications_enabled') !== 'false';
 
 // Firebase Configuration (Replace with your own if needed)
 const firebaseConfig = {
@@ -816,17 +820,17 @@ function setupLayout(){
 }
 
 /* ── NOTIFICATIONS ── */
-function requestNotificationPermission() {
+async function requestNotificationPermission() {
   if (!("Notification" in window)) {
     alert("This browser does not support desktop notification");
-    return;
+    return 'unsupported';
   }
-  Notification.requestPermission().then(permission => {
-    updateNotifBtn();
-    if (permission === "granted") {
-      new Notification("Notifications Enabled!", { body: "You will receive alerts for new tasks.", icon: "https://cdn-icons-png.flaticon.com/512/3119/3119338.png" });
-    }
-  });
+  const permission = await Notification.requestPermission();
+  updateNotifBtn();
+  if (permission === "granted") {
+    new Notification("Notifications Enabled!", { body: "You will receive alerts for new tasks.", icon: "https://cdn-icons-png.flaticon.com/512/3119/3119338.png" });
+  }
+  return permission;
 }
 
 function updateNotifBtn() {
@@ -844,7 +848,7 @@ function updateNotifBtn() {
 
 let lastNotifiedSlot = null;
 function checkNotifications(slots) {
-  if (Notification.permission !== "granted") return;
+  if (!notificationsEnabled || Notification.permission !== "granted") return;
   const { ai } = getActiveNext(slots);
   if (ai >= 0) {
     const slot = slots[ai];
@@ -855,6 +859,22 @@ function checkNotifications(slots) {
       });
       lastNotifiedSlot = slot.title;
     }
+  }
+}
+
+function updateNotifToggle(){
+  const btn = document.getElementById('notif-toggle');
+  if(!btn) return;
+  btn.textContent = notificationsEnabled ? 'Notifications: On' : 'Notifications: Off';
+  btn.classList.toggle('off', !notificationsEnabled);
+}
+
+async function toggleNotifications(){
+  notificationsEnabled = !notificationsEnabled;
+  localStorage.setItem('timetable_notifications_enabled', String(notificationsEnabled));
+  updateNotifToggle();
+  if (notificationsEnabled && 'Notification' in window && Notification.permission !== 'granted') {
+    await requestNotificationPermission();
   }
 }
 
@@ -888,6 +908,7 @@ document.addEventListener('keydown',e=>{
 window.addEventListener('resize',()=>render());
 const initApp = () => {
   updateNotifBtn();
+  updateNotifToggle();
   render();
 };
 if(document.readyState==='loading'){
