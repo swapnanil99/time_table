@@ -58,6 +58,7 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
 .nbtn.today{background:linear-gradient(135deg,var(--rev),#4030B8);border-color:transparent;color:#fff}
 .notif-toggle{width:100%;margin:10px 0 8px;padding:10px 12px;border-radius:14px;border:1px solid rgba(139,123,248,0.28);background:rgba(139,123,248,0.09);color:var(--txt);font-size:12px;font-weight:700;cursor:pointer}
 .notif-toggle.off{background:rgba(249,123,90,0.12);border-color:rgba(249,123,90,0.25);color:#ffb29d}
+.notif-test{width:100%;margin:0 0 8px;padding:10px 12px;border-radius:14px;border:1px solid rgba(62,198,160,0.28);background:rgba(62,198,160,0.1);color:#8ef0cc;font-size:12px;font-weight:700;cursor:pointer}
 
 /* DAY HEADER */
 .day-header{padding:10px 0 0}
@@ -261,6 +262,7 @@ html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);m
     <button class="nbtn" onclick="nextDay()">→</button>
   </div>
   <button class="notif-toggle" id="notif-toggle" onclick="toggleNotifications()">Notifications: On</button>
+  <button class="notif-test" id="notif-test" onclick="testNotification()">Test Notification</button>
   <div class="day-tabs" id="day-tabs"></div>
   <div class="mobile-stats" id="mobile-stats"></div>
   <div class="mobile-legend" id="mobile-legend"></div>
@@ -617,9 +619,7 @@ function render(){
   const slEl=document.getElementById('shift-line');
   if(slEl){
     if(isToday&&curDay>0){
-      slEl.textContent=shift>0
-        ?`⚡ Mac opened ${fmt(PAGE_LOAD_MIN)} — schedule shifted +${shift} min`
-        :`✓ On-time — 6:30 AM schedule`;
+      slEl.textContent=`⚡ Mac opened ${fmt(PAGE_LOAD_MIN)}`;
     } else {
       slEl.textContent='';
     }
@@ -847,16 +847,50 @@ function updateNotifBtn() {
 }
 
 let lastNotifiedSlot = null;
+let audioContext = null;
+
+function playNotificationSound() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!audioContext) audioContext = new AC();
+    const ctx = audioContext;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    const gain = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(660, now + 0.18);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } catch (err) {
+    console.warn('Notification sound failed', err);
+  }
+}
+
+function showBrowserNotification(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  new Notification(title, {
+    body,
+    icon: 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png'
+  });
+  playNotificationSound();
+}
+
 function checkNotifications(slots) {
   if (!notificationsEnabled || Notification.permission !== "granted") return;
   const { ai } = getActiveNext(slots);
   if (ai >= 0) {
     const slot = slots[ai];
     if (lastNotifiedSlot !== slot.title) {
-      new Notification("New Task: " + slot.title, {
-        body: slot.sub || "Time to start your next session!",
-        icon: "https://cdn-icons-png.flaticon.com/512/3119/3119338.png"
-      });
+      showBrowserNotification("New Task: " + slot.title, slot.sub || "Time to start your next session!");
       lastNotifiedSlot = slot.title;
     }
   }
@@ -876,6 +910,18 @@ async function toggleNotifications(){
   if (notificationsEnabled && 'Notification' in window && Notification.permission !== 'granted') {
     await requestNotificationPermission();
   }
+}
+
+async function testNotification(){
+  if (!('Notification' in window)) {
+    alert('Notifications are not supported in this browser.');
+    return;
+  }
+  if (Notification.permission !== 'granted') {
+    const permission = await requestNotificationPermission();
+    if (permission !== 'granted') return;
+  }
+  showBrowserNotification('Test Notification', 'This is a sample alert with sound.');
 }
 
 let lastRendMin=-1;
